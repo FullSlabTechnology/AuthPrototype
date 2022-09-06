@@ -9,7 +9,7 @@ namespace WebAuth.Pages
     [AllowAnonymous]
     public class LoginModel : PageModel
     {
-
+        private readonly ILogger _logger;
         private readonly IApiHelper _apiHelper;
 
         [Required]
@@ -25,8 +25,9 @@ namespace WebAuth.Pages
         public string? ErrorMessage { get; set; }
 
 
-        public LoginModel(IApiHelper apiHelper)
+        public LoginModel(ILogger<LoginModel> logger, IApiHelper apiHelper)
         {
+            _logger = logger;
             _apiHelper = apiHelper;
         }
 
@@ -42,19 +43,27 @@ namespace WebAuth.Pages
             {
 
 
+                _logger.LogInformation($"User authenticated: {HttpContext?.User?.Identity?.IsAuthenticated ?? false}");
+                _logger.LogInformation($"Current Session: {HttpContext?.Session.TryGetValue("Token", out _).ToString() ?? ""}");
+
                 var token = await _apiHelper.Authenticate(UserName, Password);
                 if (!string.IsNullOrWhiteSpace(token))
                 {
                     HttpContext.Session.SetString("Token", token);
+
+                    _logger.LogInformation($"User authenticated: {HttpContext?.User?.Identity?.IsAuthenticated ?? false}");
+                    _logger.LogInformation($"Current Session: {HttpContext?.Session.TryGetValue("Token", out _).ToString() ?? ""}");
                     return LocalRedirect(Url.GetLocalUrl(ReturnUrl));
                 }
                 else
-                    throw new NullReferenceException("Authenticate result was null");
-
+                    throw new NullReferenceException("Authenticate result was null");              
             }
             catch (Exception ex)
             {
                 ErrorMessage = ex.Message;
+                _logger.LogError(ex.Message);
+                _logger.LogInformation($"User authenticated: {HttpContext?.User?.Identity?.IsAuthenticated ?? false}");
+                _logger.LogInformation($"Current Session: {HttpContext?.Session.TryGetValue("Token", out _).ToString() ?? ""}");
             }
             return Page();
         }

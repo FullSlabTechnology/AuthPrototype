@@ -32,7 +32,7 @@ builder.Services.AddAuthentication(auth =>
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         ValidIssuer = builder.Configuration.GetSection("Jwt")["Issuer"],
-        ValidAudience = builder.Configuration.GetSection("Jwt")["Issuer"],
+        ValidAudience = builder.Configuration.GetSection("Jwt")["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration.GetSection("Jwt")["Key"]))
     };
 })
@@ -58,8 +58,8 @@ app.Use(async (context, next) =>
     var token = context.Session.GetString("Token");
     if (!string.IsNullOrEmpty(token))
     {
-        context.Request.Headers.Add("Authorization", "Bearer " + token);
-    }
+        context.Request.Headers.Add("Authorization", "Bearer " + token);        
+    }    
     await next();
 });
 
